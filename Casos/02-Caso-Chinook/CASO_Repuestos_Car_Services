@@ -1,0 +1,169 @@
+## 3. Caso de Estudio
+
+### Contexto del Negocio
+
+#### Rediseño de Sistema Informático Repuestos Car Services
+
+En las últimas décadas el mercado automotriz ha presentado un crecimiento acelerado y sostenido en el tiempo, especialmente debido a la globalización, situación que permite que nuevos clientes decidan evaluar la posibilidad de invertir en el competitivo negocio de la importación a nuestro país de vehículos de distinta gama, y de repuestos automotrices.
+
+Por otra parte, el retiro de fondos de AFPs autorizados por las últimas reformas ha permitido inyectar nuevos recursos en la economía, lo que sin duda ha producido un aumento en la demanda en el mercado automotriz.
+
+La base de la oportunidad de negocios existente en este rubro es satisfacer las necesidades de productos de alta calidad y la atención oportuna de los clientes/proveedores que quieren importar en forma mayorista, productos exclusivos para sus locales y sucursales, a un bajo costo y con una buena tasa de cambio.
+
+En este contexto, es que hace 5 años la distribuidora e importadora Repuestos Car Services inició un proyecto de mejora continua en todas las sucursales del país, con el objetivo de entregar una solución de calidad a sus clientes, que son también proveedores, de modo de fidelizarlos, y además captar nuevos mercados para poder crecer y proyectarse a largo plazo.
+
+Como la empresa presenta un crecimiento muy relevante y requiere mejorar sus sistemas internos para estar preparados para la extracción de un importante volumen de datos e información, es que ha contratado los servicios de la empresa Cogno Consulting. Usted ya cuenta con una amplia experiencia en la empresa y su jefe le ha encargado la preparación de los procesos que extraerán y recalcularán información relevante y confidencial de la empresa importadora y de la optimización del almacenamiento de archivos binarios. A partir de un análisis preliminar, se debe considerar la depuración de los cálculos de los stocks críticos, la clasificación de repuestos, los cálculos de las haberes y deberes relacionados a las remuneraciones de los vendedores, y la optimización del repositorio de productos en promoción y de los clientes.
+
+En la fase inicial de este Proceso la empresa consultora ha cargado y depurado información de mucho valor estratégico para la empresa importadora, estas últimas actividades han sido realizadas bajo presión y se han cometido una cantidad importante de fallos en: la carga de datos, de archivos de imágenes y cálculos aritméticos erróneos en las remuneraciones de vendedores.
+
+Usted como asesor y especialista en lenguaje de base de datos PL/SQL debe implementar a la brevedad los procesos necesarios.
+
+La primera etapa de este proyecto consistirá en la construcción de 3 procesos que serán la base para las consultas e informes que las nuevas aplicaciones considerarán.
+
+Más abajo se describe en forma general, los requisitos que debe implementar:
+
+- Generar un proceso que permita visualizar los valores de pagos de bonificaciones y comisiones asociados a los vendedores de la compañía de acuerdo con reglas de negocio específicas (tramos de renta neta), información que debe ser almacenada para futuros cuadros comparativos por mes.
+
+- Generar un proceso de cálculos de rebajas de valores unitarios de productos importados, de manera de dar prioridad a aquellos países de origen que tienen mejor aceptación de los productos de la compañía, y que generan una mayor facturación en el mercado interno. Generando información estadística para el análisis de factibilidad económica de compra de nuevos volúmenes de stock.
+
+- Generar una base de datos no estructurada...
+
+---
+
+## Especificación de Requerimientos
+
+### Proceso N°1
+
+Como ya es conocido, la importadora Car Services, no sólo está presente en el mercado de las ventas de productos nacionales, sino que también llegan de otros países. Se requiere implementar un proceso automático, que permita considerar las variaciones de tipo de Cambio de moneda a DÓLAR para los productos que no son Nacionales.
+
+La rutina debe funcionar de la siguiente forma:
+
+- Cuando el valor de compra en dólares haya incrementado en un 10% y el producto no sea nacional, se debe replicar en el detalle de las boletas ese aumento. Es decir, se debe incrementar el valor TotalLinea en 10%, pero no el valor unitario en el detalle de la boleta.
+
+- Cuando no se cumpla la condición anterior se estimó necesario que automáticamente se debe disminuir en un 20% el valor unitario en el detalle de la boleta, además del TotalLinea.
+
+Ud. deberá implementar una solución para que cada vez que un producto sea modificado con respecto al valor de compra en dólares, los valores de los productos asociados en detalle de boletas de venta se modifiquen satisfactoriamente. Además, debe validar el nuevo valor asignado para que siempre sea positivo, este requerimiento debe validarlo a través de un Trigger.
+
+#### Actualizaciones de productos:
+
+- **Para el producto CASTROL EDGE 0W-30 946**, actualizar el valor de compra en dólares.
+  - Nuevo Valor: 6.0
+
+- **Para el producto HYUNDAI XTEER G7000 10W-40**, actualizar el valor de compra en dólares.
+  - Nuevo Valor: 10.0
+
+- **Para el producto CAMBIO PASTILLAS FRENO SUZUKI ALTO**, actualizar el valor de compra en dólares.
+  - Nuevo Valor: 2
+
+#### Estado inicial de las tablas:
+
+**Tabla PRODUCTO:**
+
+| CODPRODUCTO | DESCRIPCION | VALORCOMPRAPESO | VUNITARIO | VALORCOMPRADOLAR | TOTALSTOCK | STIKSEGURIDAD | PROCEDENCIA |
+|-------------|-------------|-----------------|-----------|------------------|------------|---------------|-------------|
+| 3 | CASTROL EDGE OW-30 946 | 7990 | 10000 | 7,09 | 54 | 51 | I |
+| 6 | MOBIL SUPER 8 2000 10W-40 GASOLINA | 5679 | 7850 | 7,98 | 60 | 61 | I |
+| 9 | YPF ELAION F10 SAE 15W-40 | 15000 | 18990 | 17,85 | 18 | 51 | I |
+| 25 | CAMBIO PASTILLAS FRENO SUZUKI ALTO | (null) | 23950 | (null) | (null) | (null) | N |
+
+**Tabla DETALLE_BOLETA (antes de cambios):**
+
+| NUMBOLETA | CODPRODUCTO | VUNITARIO | CODPROMOCION | DESCRIPTION | DESCUENTO | CANTIDAD | TOTALINEA |
+|-----------|------------|-----------|--------------|-------------|-----------|----------|------------|
+| 124 | 3 | 12990 | (null) | (null) | 50 | 6 | 58455 |
+| 126 | 5 | 4950 | 104 | FILTRO DE ACEITE GRATIS HYUNDAI XTEER | 0 | 6 | 29700 |
+| 127 | 5 | 4950 | 104 | FILTRO DE ACEITE GRATIS HYUNDAI XTEER | 0 | 6 | 29700 |
+| 128 | 5 | 4950 | 104 | FILTRO DE ACEITE GRATIS HYUNDAI XTEER | 0 | 6 | 29700 |
+
+**Tabla DETALLE_BOLETA (después de cambios):**
+
+| NUMBOLETA | CODPRODUCTO | VUNITARIO | CODPROMOCION | DESCRI_PROM | DESCUENTO | CANTIDAD | TOTALLINEA |
+|-----------|------------|-----------|--------------|-------------|-----------|----------|-------------|
+| 124 | 3 | 10392 | null | null | 50 | 6 | 46764 |
+| 126 | 5 | 4950 | 104 | FILTRO DE aceite GRATIS HYUNDAI XTEER | 0 | 6 | 35640 |
+| 127 | 5 | 4950 | 104 | FILTRO DE aceite GRATIS HYUNDAI XTEER | 0 | 6 | 35640 |
+| 128 | 5 | 4950 | 104 | FILTRO DE aceite GRATIS HYUNDAI XTEER | 0 | 6 | 35640 |
+
+---
+
+### Proceso N°2
+
+Es muy relevante para el área comercial de la empresa contar con mejoras continuas de sus procesos internos, de manera que los colaboradores y específicamente los vendedores se encuentren satisfechos con sus labores diarias y puedan contar con beneficios especiales en sus remuneraciones.
+
+Para lo anterior, en esta etapa del proyecto a Ud. se le solicita que calcule y almacene en una tabla resultante (PAGO_VENDEDOR).
+
+#### Reglas del Negocio a Considerar en el Proceso
+
+- En esta etapa considerar a vendedores cuya comuna de residencia sea SANTIAGO y ÑUÑOA, considerando solo a aquellos que hayan presentado ventas con fecha de boleta del periodo a procesar (paramétrico). Para efectos de realizar una mejora efectiva en el alcance líquido (total a pagar), considere los siguientes cálculos:
+
+- La comisión especial correspondiente al mes, se debe obtener multiplicando el sueldo base actual de cada vendedor por la comisión actual y por el pct_honorario que se obtiene de la siguiente tabla almacenada, según el rango de sueldo base actual del vendedor.
+
+- Para el cálculo del ítem colación se considerará un porcentaje especial según la edad del vendedor. Para este ítem, se debe calcular la edad actual del vendedor y obtener los porcentajes desde la tabla respectiva.
+
+- Para el cálculo del ítem colación se considerará solamente el 5% del sueldo base.
+
+- Según la Ley del trabajo actual, a los vendedores se les debe descontar por concepto de previsión un 13% del sueldo base y por concepto de salud un 7% del sueldo base.
+
+- El total a pagar se obtiene sumando todos los haberes (sueldo base, comisión especial, colación mejorada y movilización) y restando los deberes (previsión y salud).
+
+La gerencia ha definido que el proceso que Ud. construirá será ejecutado automáticamente y los resultados deben verse reflejados en la tabla PAGOS_VENDEDOR.
+
+#### Requerimientos Mínimos, en Términos de Diseño, para Construir el Proceso
+
+**a) Construir un Package que contenga una función pública, un procedimiento y 4 variables públicas:**
+
+- Una función para calcular el factor de aumento de acuerdo al rango del sueldo base de los empleados que son vendedores. Para esto deberá utilizar la tabla que tiene los rangos asociados. Esta función además deberá controlar cualquier error que se produzca, almacenando la información en la tabla ERROR_PROCESOS_MENSUALES indicando el programa en donde ocurrió el error y el mensaje de error Oracle, según se muestra en el ejemplo. Para la columna correl_error usar el objeto secuencia SEQ_ERROR. Cuando se produzca un error, esta función deberá retornar CERO.
+
+- Un Procedimiento que permita administrar e insertar los errores ocurridos durante el proceso principal y en cada subrutina del proceso, utilizando Native Dynamic SQL para poblar la tabla: ERROR_PROCESOS_MENSUALES.
+
+- Las variables públicas pueden ser usadas en las consultas que usted defina.
+
+**b) Construir una Función Almacenada que permita obtener el monto correspondiente a la colación del vendedor**, que se calculará aplicando al sueldo base, el factor correspondiente a la edad del vendedor. Para esto deberá utilizar la tabla que tiene los porcentajes asociados. Esta función además deberá controlar cualquier error que se produzca, almacenando la información en la tabla ERROR_PROCESOS_MENSUALES indicando el programa en donde ocurrió el error y el mensaje de error Oracle. Para la columna correl_error usar el objeto secuencia SEQ_ERROR. Cuando se produzca un error, esta función deberá retornar CERO.
+
+**c) Construir un Procedimiento Almacenado Principal** para generar la información resultante en la tabla: PAGO_VENDEDOR. Este procedimiento debe integrar el uso de los constructores del Package y de la Función Almacenada para construir la solución requerida.
+
+- Deberá procesar a aquellos Vendedores que tuvieron ventas durante el mes y año a procesar y que residen en las comunas especificadas en el punto 3.1.
+
+- Utilice SQL Dinámico en el truncamiento de la tabla de resultados.
+
+- Puede utilizar un bloque PL/SQL anónimo que despliegue la cantidad de procesados y que llame al proceso principal.
+
+El test de sus programas se debe efectuar para que el proceso genere la información correspondiente al mes SEPTIEMBRE del 2020, esto significa que se debe simular que el proceso se ejecutó el mes octubre del 2020.
+
+#### Ejemplo de resultados esperados:
+
+```
+Cantidad de VENDEDORES Procesados MES: 7
+Procedimiento PL/SQL terminado correctamente.
+```
+
+**Tabla PAGO_VENDEDOR:**
+
+| MES_ANNO | RUTVENDEDOR | NOMBRE | SUELDO_BASE | COMISION_MES | COLACION | MOVILIZACION | PREVISION | SALUD | TOTAL_PAGAR |
+|----------|-------------|--------|-------------|--------------|----------|--------------|-----------|-------|-------------|
+| 092020 | 13566589-K | SABINA MARTA MORGADO | 335,000 | 67,000 | 16,750 | 16,750 | 43,550 | 23,450 | 368,500 |
+| 092020 | 17456000-1 | MARIO JOSÉ PEREIRA | 1,265,000 | 126,500 | 63,250 | 63,250 | 164,450 | 88,550 | 1,265,000 |
+| 092020 | 10456789-4 | CLAUDIO VALDES | 654,880 | 130,976 | 32,744 | 32,744 | 85,134 | 45,842 | 720,368 |
+| 092020 | 10125945-7 | PEDRO GONZALEZ | 126,500 | 126,500 | 6,325 | 6,325 | 16,445 | 8,855 | 126,500 |
+| 092020 | 10712354-2 | MARIO ANDRÉS SOTO | 665,000 | 133,000 | 0 | 33,250 | 86,450 | 46,550 | 698,250 |
+| 092020 | 10656569-K | LUIS CARLOS MUÑOZ | 565,000 | 226,000 | 28,250 | 28,250 | 73,450 | 39,550 | 734,500 |
+| 092020 | 6182133-8 | CARLOS JOAQUÍN MUÑOZ | 465,000 | 465,000 | 23,250 | 23,250 | 60,450 | 32,550 | 465,000 |
+
+**Tabla ERROR_PROCESOS_MENSUALES (ejemplo):**
+
+| CORREL_ERROR | RUTINA_ERROR | DESCRIP_ERROR |
+|--------------|--------------|---------------|
+| 1 | fn_pct_por_rango | ORA-01422: exact fetch returns more than requested number of rows |
+| 2 | fn_ptct_por_rango | ORA-01403: no data found |
+| 3 | fn_pct_por_rango | ORA-01422: exact fetch returns more than requested number of rows |
+| 4 | FN_PCT_AUM_COLACTON | ORA-01422: exact fetch returns more than requested number of rows |
+
+---
+
+### Proceso N°3
+
+En el marco del proyecto de rediseño del sistema informático de Repuestos Car Services, la empresa ha decidido iniciar un proceso de transformación tecnológica orientado a la modernización de su infraestructura de datos. Dada la creciente cantidad y diversidad de información generada —incluyendo imágenes de productos, catálogos técnicos, documentos de importación y registros de transacciones comerciales— la compañía busca migrar parte de su almacenamiento hacia bases de datos no estructuradas. Este cambio permitirá una gestión más flexible y eficiente de los datos, mejorando la trazabilidad, la velocidad de consulta y la integración con las nuevas aplicaciones analíticas y de inteligencia de negocios que la empresa planea implementar en el mediano plazo.
+
+A modo de probar los nuevos sistemas necesarios para la implementación de las bases de datos no estructuradas, la empresa le ha pedido que realice una prueba con la información que ha trabajado durante el proceso 1 y 2, para hacer pruebas de rendimientos y futuras cargas de información masivas. Por lo que debe diseñar y levantar una base de datos no estructurada con sólo la información trabajada en los procesos anteriores (tanto campos y tablas usadas en la resolución de los procesos 1 y 2); el diseño de la BD no estructurada será a criterio de los estudiantes y debe ser defendida en la presentación. Finalmente, debe registrar 4 documentos en cada colección creada en su modelo con la información de la base de datos actual de la empresa.
+
+Para realizar las pruebas de rendimiento y medir tiempos de respuestas de los sistemas informáticos, la empresa le ha pedido que Usted diseñe 3 operaciones por cada CRUD (Create, Read, Update, Delete), o sea 12 operaciones en total, procure utilizar los operadores vistos en clases (ej: `$inc`, `$push`, `$pull`, etc). En la documentación del informe y presentación debe indicar de qué trata cada CRUD y su solución en código (MongoDB).
